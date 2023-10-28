@@ -2,6 +2,8 @@
 
 :- dynamic difficulty/2.
 
+:- dynamic nonblock/2.
+
 board([
         [empty,     empty,      empty,     empty,     empty,     empty,     empty,     empty,     empty,     empty,     empty,     empty,     empty,     empty,     empty,     empty,     empty],
         [empty,     empty,      empty,     empty,     empty,     empty,     empty,     empty,     empty,     empty,     empty,     empty,     empty,     empty,     empty,     empty,     empty],
@@ -16,4 +18,5 @@ board([
 ]).
 
 
+symbol(nonblock , 'X') :- !.
 symbol(empty,' ') :- !.

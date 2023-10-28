@@ -34,7 +34,7 @@ display_header(1, Max) :-
 
 display_header(N, Max) :-
     N > 9, 
-    format('~d   ', [N]),
+    format('~d  ', [N]),
     N1 is N+1,
     display_header(N1, Max), !.
 
@@ -66,8 +66,31 @@ display_rows(Board, Line) :-
     Line1 is Line+1,
     display_rows(Board, Line1).
 
+
 init_state(Board) :-
-    board(Board).
+    board(Board),
+    fill_nonblock(Board).
+
+
+fill_nonblock(Board) :-
+    asserta(nonblock(2-1)),
+    asserta(nonblock(2-2)),
+    asserta(nonblock(2-3)),
+    asserta(nonblock(2-4)),
+    asserta(nonblock(2-5)),
+    asserta(nonblock(2-6)),
+    asserta(nonblock(2-7)),
+    asserta(nonblock(2-8)).
+
+
+
+
+
+
+ 
+
+
+ 
 
 
 
