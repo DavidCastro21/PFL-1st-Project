@@ -4,6 +4,10 @@
 
 :- dynamic nonblock/1.
 
+:- dynamic white/1.
+
+:- dynamic black/1.
+
 board([
         [nonblock,     nonblock,      nonblock,     nonblock,     empty,     nonblock,     empty,     nonblock,     empty,     nonblock,     empty,     nonblock,     empty,     nonblock,     nonblock,     nonblock,     nonblock],
         [nonblock,     nonblock,      nonblock,     empty,     nonblock,     black,     nonblock,     black,     nonblock,     black,     nonblock,     black,     nonblock,     empty,     nonblock,     nonblock,     nonblock],

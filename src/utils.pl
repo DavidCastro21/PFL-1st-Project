@@ -14,6 +14,12 @@ init_random_state :-
     now(X),
     setrand(X).
 
+clear_data :-
+    retractall(white(_)),
+    retractall(black(_)),
+    retractall(difficulty(_,_)),
+    retractall(name_of(_,_)).
+
 get_line(Result, Acc):-
     get_char(Char),
     Char \= '\n',
@@ -32,11 +38,13 @@ get_name(Player):-
 
 read_number(X):-
     read_number_aux(X,0).
+
 read_number_aux(X,Acc):- 
     get_code(C),
     between(48, 57, C), !,
     Acc1 is 10*Acc + (C - 48),
     read_number_aux(X,Acc1).
+
 read_number_aux(X,X).
 
 get_option(Min,Max,Context,Value):-
@@ -44,6 +52,18 @@ get_option(Min,Max,Context,Value):-
     repeat,
     read_number(Value),
     between(Min, Max, Value), !.
+
+get_move(Board, Col1-Row1-Col2-Row2):-
+    length(Board, MaxRow),
+    length(Board, MaxCol),
+    get_option(1, MaxCol, 'Column of the piece to move', Col1),
+    get_option(1, MaxRow, 'Row of the piece to move', Row1),
+    get_option(1, MaxCol, 'Column of the destination', Col2),
+    get_option(1, MaxRow, 'Row of the destination', Row2).
+
+replace(Index, Element, List, Result) :-
+    nth0(Index, List, _, R),
+    nth0(Index, Result, Element, R).
 
 
 

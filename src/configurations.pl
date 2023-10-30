@@ -4,14 +4,14 @@
 :- consult(utils).
 :- consult(data).
 
-/*
+
 choose_difficulty(Bot) :-
     format('Please select ~a status:\n', [Bot]),
     write('1 - Easy\n'),
     write('2 - Hard\n'),
     get_option(1, 2, 'Difficulty', Option), !,
     asserta((difficulty(Bot, Option))).
-*/
+
 
 option(1):-
     write('Human vs. Human\n'),
