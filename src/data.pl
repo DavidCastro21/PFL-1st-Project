@@ -4,9 +4,6 @@
 
 :- dynamic nonblock/1.
 
-:- dynamic white/1.
-
-:- dynamic black/1.
 
 board([
         [nonblock,     nonblock,      nonblock,     nonblock,     empty,     nonblock,     empty,     nonblock,     empty,     nonblock,     empty,     nonblock,     empty,     nonblock,     nonblock,     nonblock,     nonblock],
@@ -22,8 +19,8 @@ board([
 
 
 
-piece_info(black, player1, black1).
-piece_info(white, player1, white1).
+piece_info(blackP, player1, black).
+piece_info(whiteP, player2, white).
 piece_info(nonblock, neutral).
 piece_info(empty, neutral).
 

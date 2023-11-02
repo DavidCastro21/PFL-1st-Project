@@ -54,12 +54,10 @@ get_option(Min,Max,Context,Value):-
     between(Min, Max, Value), !.
 
 get_move(Board, Col1-Row1-Col2-Row2):-
-    length(Board, MaxRow),
-    length(Board, MaxCol),
-    get_option(1, MaxCol, 'Column of the piece to move', Col1),
-    get_option(1, MaxRow, 'Row of the piece to move', Row1),
-    get_option(1, MaxCol, 'Column of the destination', Col2),
-    get_option(1, MaxRow, 'Row of the destination', Row2).
+    get_option(1, 17, 'Column of the piece to move', Col1),
+    get_option(1, 9, 'Row of the piece to move', Row1),
+    get_option(1, 17, 'Column of the destination', Col2),
+    get_option(1, 9, 'Row of the destination', Row2).
 
 replace(Index, Element, List, Result) :-
     nth0(Index, List, _, R),

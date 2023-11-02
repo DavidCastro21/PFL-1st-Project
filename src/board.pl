@@ -2,28 +2,25 @@
 :- consult(data).
 :- consult(utils).
 
-put_piece(Board, Col-Row, empty, NewBoard) :-
-    put_piece(Board, Col-Row, nonblock, NewBoard).
 
-put_piece(Board, Col-Row, Piece, NewBoard) :-
+put_piece(Board, Col-Row, Piece, NewBoard):-
     RowIndex is Row-1, ColIndex is Col-1,
     nth0(RowIndex, Board, Line),
     replace(ColIndex, Piece, Line, NewLine),
     replace(RowIndex, NewLine, Board, NewBoard).
 
-
-position(Board, Col-Row, Piece) :-
+position(Board, Col-Row, Piece):-
     nth1(Row, Board, Line),
-    nth1(Col, Line, Piece).
+    nth1(Col, Line, Piece), !.
+
 
 position(Board, Col-Row, Piece) :-
     nth1(Row, Board, Line),
     nth1(Col, Line, Piece),
     Piece \= empty, !.
 
+
 in_bounds(Board, Col-Row) :-
-    length(Board, 9),
-    length(Board, 17),
     between(1, 9, Row),
     between(1, 17, Col).
 
@@ -79,6 +76,9 @@ display_rows(Board, Line) :-
 
 init_state(Board) :-
     board(Board).
+
+
+
 
 
 
