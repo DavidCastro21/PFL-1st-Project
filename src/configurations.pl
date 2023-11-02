@@ -15,7 +15,8 @@ choose_difficulty(Bot) :-
 
 option(1):-
     write('Human vs. Human\n'),
-    get_name(player1), get_name(player2).
+    get_name(player1), nl,
+    get_name(player2).
 option(2):-
     write('Human vs. Bot\n'),
     get_name(player1),
@@ -32,7 +33,7 @@ option(3):-
 choose_player(Player):-
     name_of(player1, Name1),
     name_of(player2, Name2),
-    format('Who starts playing?\n1 - ~a with UPPERCASE animals\n2 - ~a with lowercase animals\n', [Name1, Name2]),
+    format('Who starts playing?\n1 - ~a with Black pieces\n2 - ~a with White pieces\n', [Name1, Name2]),
     get_option(1, 2, 'Select', Index),
     nth1(Index, [player1, player2], Player).
 
