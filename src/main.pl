@@ -6,32 +6,34 @@
 
 validate_move(GameState, Col1-Row1, Col2-Row2):-
     [Board, Player, _] = GameState,
-    write('1 \n'),
     in_bounds(Board, Col1-Row1), in_bounds(Board, Col2-Row2),
-    write('2 \n'),
     position(Board, Col1-Row1, Piece1), position(Board, Col2-Row2, Piece2),
-    write('3 \n'),
     \+piece_info(Piece1, neutral), piece_info(Piece2, neutral),
-    write('4 \n'),
     piece_info(Piece, Player, Piece1),
-    write('5 \n'),
     write(Piece),
     valid_direction(Piece, Col1-Row1, Col2-Row2),
-    write('6 \n'),
     \+path_obstructed(Board, Col1-Row1, Col2-Row2),
-    write('7 \n').
+    (
+        (Player = player1, Piece2 \= winWhite);
+        (Player = player2, Piece2 \= winBlack)
+    ).
 
 valid_direction(whiteP, Col1-Row1, Col2-Row2):-
     (Col2 =:= Col1 + 1, Row2 =:= Row1 + 1;
     Col2 =:= Col1 + 1, Row2 =:= Row1 - 1;
     Col2 =:= Col1 - 1, Row2 =:= Row1 + 1;
-    Col2 =:= Col1 - 1, Row2 =:= Row1 - 1).
+    Col2 =:= Col1 - 1, Row2 =:= Row1 - 1;
+    Col2 =:= Col1 + 2, Row2 =:= Row1;
+    Col2 =:= Col1 - 2, Row2 =:= Row1).
 
 valid_direction(blackP, Col1-Row1, Col2-Row2):-
     (Col2 =:= Col1 + 1, Row2 =:= Row1 + 1;
     Col2 =:= Col1 + 1, Row2 =:= Row1 - 1;
     Col2 =:= Col1 - 1, Row2 =:= Row1 + 1;
-    Col2 =:= Col1 - 1, Row2 =:= Row1 - 1).
+    Col2 =:= Col1 - 1, Row2 =:= Row1 - 1;
+    Col2 =:= Col1 + 2, Row2 =:= Row1;
+    Col2 =:= Col1 - 2, Row2 =:= Row1).
+
 
 move_direction(DeltaCol-DeltaRow,-1,-1) :-  
     (DeltaCol < 0, DeltaRow < 0), !.
@@ -41,6 +43,10 @@ move_direction(DeltaCol-DeltaRow,-1,1) :-
     (DeltaCol < 0, DeltaRow > 0), !.
 move_direction(DeltaCol-DeltaRow,1,1) :-    
     (DeltaCol > 0, DeltaRow > 0), !.
+move_direction(DeltaCol-DeltaRow,2,0) :-
+    (DeltaCol > 1, DeltaRow =:= 0), !.
+move_direction(DeltaCol-DeltaRow,-2,0) :-
+    (DeltaCol < -1, DeltaRow =:= 0), !.
 
 path_obstructed(Board, Col1-Row1, Col2-Row2):-
     DeltaCol is Col2-Col1, DeltaRow is Row2-Row1,
@@ -65,12 +71,12 @@ show_winner([_,_,TotalMoves], Winner):-
     winner_moves(TotalMoves, WinnerMoves),
     format('Winner is ~a with ~d moves!\n', [Name, WinnerMoves]).
 
-/*
+
 game_cycle(GameState):-
     game_over(GameState, Winner), !,
-    display_game(GameState).
+    display_game(GameState),
     show_winner(GameState, Winner).
-*/
+
 game_cycle(GameState):-
     display_game(GameState),
     print_turn(GameState),
@@ -97,6 +103,20 @@ move(GameState, Col1-Row1-Col2-Row2, NewGameState):-
     NewTotalMoves is TotalMoves + 1,
     NewGameState = [Board2, OtherPlayer, NewTotalMoves].
 
+game_over([Board, Player, _], Winner):-
+    points_to_win(WinnerPoints),
+    other_player(Player, Winner),
+    check_end(Board, Winner, WinnerPoints),
+    name_of(Player, Name),
+    format('~a\'s WIN!\n', [Name]).
+
+check_end(Board, Winner, WinnerPoints):-
+    findall(1, (winBlack(Coordinate), piece_info(_, Player, Piece), position(Board, Coordinate, Piece)), End),
+    length(End, WinnerPoints).
+
+check_end(Board, Winner, WinnerPoints):-
+    findall(1, (winWhite(Coordinate), piece_info(_, Player, Piece), position(Board, Coordinate, Piece)), End),
+    length(End, WinnerPoints).
 
 choose_move([Board, Player, TotalMoves], Col1-Row1-Col2-Row2):-
     \+difficulty(Player, _),
@@ -108,12 +128,29 @@ check_directions(Board,Player,Result):-
     findall(1,( piece_info(Type1,Player,Piece1), 
                 in_bounds(Board,ColI-RowI),
                 position(Board,ColI-RowI,Piece1),
-                empty(ColF-RowF),
-                position(Board,ColF-RowF,empty), % Water position is not filled by another piece
+                piece_info(winBlack, _, Piece2),
+                position(Board,ColF-RowF,empty), 
                 valid_direction(Type1,ColI-RowI,ColF-RowF), 
                 \+path_obstructed(Board,ColI-RowI,ColF-RowF)),
             List),
     length(List, Result).
+
+check_directions(Board,Player,Result):-
+    findall(1,( piece_info(Type1,Player,Piece1), 
+                in_bounds(Board,ColI-RowI),
+                position(Board,ColI-RowI,Piece1),
+                piece_info(winWhite, _, Piece2),
+                position(Board,ColF-RowF,empty), 
+                valid_direction(Type1,ColI-RowI,ColF-RowF), 
+                \+path_obstructed(Board,ColI-RowI,ColF-RowF)),
+            List),
+    length(List, Result).
+
+choose_move([Board, Player, TotalMoves], Col1-Row1-Col2-Row2):-
+    \+difficulty(Player, _),
+    repeat,
+    get_move(Board, Col1-Row1-Col2-Row2),
+    validate_move([Board, Player, TotalMoves],Player, Level, Move), !.
 
 choose_move([Board, Player, TotalMoves], Move):-
     difficulty(Player, Level),

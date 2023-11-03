@@ -32,11 +32,11 @@ option(3):-
 choose_player(Player):-
     name_of(player1, Name1),
     name_of(player2, Name2),
-    format('Who starts playing?\n1 - ~a with UPPERCASE animals\n2 - ~a with lowercase animals\n', [Name1, Name2]),
+    format('Who are the starting and black pieces?\n1 - ~a with UPPERCASE animals\n2 - ~a with lowercase animals\n', [Name1, Name2]),
     get_option(1, 2, 'Select', Index),
     nth1(Index, [player1, player2], Player).
 
-stonesrivers :-
+differo :-
     write('========================\n'),
     write('  Welcome to DIFFERO!\n'),
     write('========================\n').
@@ -55,8 +55,8 @@ set_mode :-
     option(Option).
 
 
-configurations([Board,Player,0]):-
-    stonesrivers,
+configurations([Board,Player,1]):-
+    differo,
     set_mode,
     init_random_state,
     choose_player(Player),

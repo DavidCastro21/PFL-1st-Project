@@ -15,8 +15,8 @@ init_random_state :-
     setrand(X).
 
 clear_data :-
-    retractall(white(_)),
-    retractall(black(_)),
+    retractall(winBlack(_)),
+    retractall(winWhite(_)),
     retractall(difficulty(_,_)),
     retractall(name_of(_,_)).
 

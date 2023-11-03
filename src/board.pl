@@ -2,6 +2,13 @@
 :- consult(data).
 :- consult(utils).
 
+put_piece(Board, Col-Row, empty, NewBoard) :-
+    winBlack(Col-Row), !,
+    put_piece(Board, Col-Row, winBlack, NewBoard).
+
+put_piece(Board, Col-Row, empty, NewBoard) :-
+    winWhite(Col-Row), !,
+    put_piece(Board, Col-Row, winWhite, NewBoard).
 
 put_piece(Board, Col-Row, Piece, NewBoard):-
     RowIndex is Row-1, ColIndex is Col-1,
@@ -10,15 +17,23 @@ put_piece(Board, Col-Row, Piece, NewBoard):-
     replace(RowIndex, NewLine, Board, NewBoard).
 
 position(Board, Col-Row, Piece):-
+    \+winWhite(Col-Row),
+    \+winBlack(Col-Row),
     nth1(Row, Board, Line),
     nth1(Col, Line, Piece), !.
 
 
 position(Board, Col-Row, Piece) :-
+    (winBlack(Col-Row); winWhite(Col-Row)),
     nth1(Row, Board, Line),
     nth1(Col, Line, Piece),
-    Piece \= empty, !.
+    Piece \= empty, Piece \= winBlack, Piece \= winWhite, !.
 
+position(_, Col-Row, winBlack):- 
+    winBlack(Col-Row), !.
+
+position(_, Col-Row, winWhite):-
+    winWhite(Col-Row), !.
 
 in_bounds(Board, Col-Row) :-
     between(1, 9, Row),
@@ -74,8 +89,23 @@ display_rows(Board, Line) :-
     display_rows(Board, Line1).
 
 
+end_board:-
+    asserta((winWhite(5-1))),
+    asserta((winWhite(7-1))),
+    asserta((winWhite(9-1))),
+    asserta((winWhite(11-1))),
+    asserta((winWhite(13-1))),
+    asserta((winBlack(5-9))),
+    asserta((winBlack(7-9))),
+    asserta((winBlack(9-9))),
+    asserta((winBlack(11-9))),
+    asserta((winBlack(13-9))),
+    asserta((points_to_win(1))), !.
+
 init_state(Board) :-
-    board(Board).
+    board(Board),
+    end_board.
+
 
 
 
