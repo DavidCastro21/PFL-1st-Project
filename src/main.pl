@@ -10,7 +10,6 @@ validate_move(GameState, Col1-Row1, Col2-Row2):-
     position(Board, Col1-Row1, Piece1), position(Board, Col2-Row2, Piece2),
     \+piece_info(Piece1, neutral), piece_info(Piece2, neutral),
     piece_info(Piece, Player, Piece1),
-    write(Piece),
     valid_direction(Piece, Col1-Row1, Col2-Row2),
     \+path_obstructed(Board, Col1-Row1, Col2-Row2),
     (
@@ -103,26 +102,54 @@ move(GameState, Col1-Row1-Col2-Row2, NewGameState):-
     NewTotalMoves is TotalMoves + 1,
     NewGameState = [Board2, OtherPlayer, NewTotalMoves].
 
+valid_moves(GameState, _, ListOfMoves):-
+    write ('1 \n'),
+    findall(Col1-Row1-Col2-Row2, validate_move(GameState, Col1-Row1, Col2-Row2), ListOfMoves),
+    write('2 \n'),
+    \+length(ListOfMoves, 0),
+    write('3  \n').
+
+valid_moves(GameState, Player, ListOfMoves) :-
+    [Board, _, TotalMoves] = GameState,
+    findall(Col1-Row1-Col2-Row2, validate_move([Board, Player, TotalMoves], Col1-Row1, Col2-Row2), ListOfMoves).
+
+
 game_over([Board, Player, _], Winner):-
     points_to_win(WinnerPoints),
     other_player(Player, Winner),
-    check_end(Board, Winner, WinnerPoints),
+    count_end_positions(Board, Winner, WinnerPoints),
     name_of(Player, Name),
     format('~a\'s WIN!\n', [Name]).
 
-check_end(Board, Winner, WinnerPoints):-
+count_end_positions(Board, Winner, WinnerPoints):-
+    write('7 \n'),
+    Player == player1,
+    write('8 \n'),
     findall(1, (winBlack(Coordinate), piece_info(_, Player, Piece), position(Board, Coordinate, Piece)), End),
+    write('9 \n'),
     length(End, WinnerPoints).
 
-check_end(Board, Winner, WinnerPoints):-
+count_end_positions(Board, Winner, WinnerPoints):-
+    write('10 \n'),
+    Player == player2,
+    write('11 \n'),
     findall(1, (winWhite(Coordinate), piece_info(_, Player, Piece), position(Board, Coordinate, Piece)), End),
+    write('12 \n'),
     length(End, WinnerPoints).
 
-choose_move([Board, Player, TotalMoves], Col1-Row1-Col2-Row2):-
-    \+difficulty(Player, _),
-    repeat,
-    get_move(Board, Col1-Row1-Col2-Row2),
-    validate_move([Board, Player, _], Col1-Row1, Col2-Row2), !.
+
+value([Board, OtherPlayer, _], Player, Value) :-
+    write('13 \n'),
+    count_end_positions(Board, Player, winBlack),
+    write('14 \n'),
+    count_end_positions(Board, Player, winWhite),
+    write('15 \n'),
+    EndDiff is winBlack - winWhite,
+    write('16 \n'),
+    check_directions(Board, Player, EndsReachable),
+    write('17 \n'),
+    Value is 100 * EndDiff + EndsReachable,
+    write('18 \n').
 
 check_directions(Board,Player,Result):-
     findall(1,( piece_info(Type1,Player,Piece1), 
@@ -150,28 +177,61 @@ choose_move([Board, Player, TotalMoves], Col1-Row1-Col2-Row2):-
     \+difficulty(Player, _),
     repeat,
     get_move(Board, Col1-Row1-Col2-Row2),
-    validate_move([Board, Player, TotalMoves],Player, Level, Move), !.
+    validate_move([Board, Player, TotalMoves],Col1-Row1, Col2-Row2), !.
 
 choose_move([Board, Player, TotalMoves], Move):-
     difficulty(Player, Level),
     choose_move([Board, Player, TotalMoves], Player, Level, Move), !.
 
-choose_move(GameState, Player, 1 , Col1-Row1-Col2-Row2):-
+choose_move(GameState, Player, 1, ColI-RowI-ColF-RowF):-
+    write('19 \n'),
     valid_moves(GameState, Player, ListOfMoves),
-    random_member(ColI-RowI-ColF-RowF, ListOfMoves).
+    write('20 \n'),
+    length(ListOfMoves, NumMoves),
+    format('~d \n', [NumMoves]),
+    write('21 \n'),
+    random(0, NumMoves, RandomIndex),
+    write('22 \n'),
+    nth0(RandomIndex, ListOfMoves, ColI-RowI-ColF-RowF).
+
 
 choose_move(GameState, Player, 2, ColI-RowI-ColF-RowF):-
+    write('22 \n'),
 	valid_moves(GameState, Player, ListOfMoves),
+    write('23 \n'),
     other_player(Player, NewPlayer),
+    write('24 \n'),
 	findall(Value-Coordinate, ( member(Coordinate, ListOfMoves), 
                                 move(GameState, Coordinate, NewGameState), 
                                 value(NewGameState,Player, Value1),
                                 minimax(NewGameState, NewPlayer, min, 1, Value2),
                                 Value is Value1 + Value2), Pairs),
+    write('25 \n'),
     sort(Pairs, SortedPairs),
+    write('26 \n'),
     last(SortedPairs, Max-_),
+    write('27 \n'),
     findall(Coordinates, member(Max-Coordinates, SortedPairs), MaxCoordinates),
-    random_member(ColI-RowI-ColF-RowF, MaxCoordinates).
+    write('28 \n'),
+    random_member(ColI-RowI-ColF-RowF, MaxCoordinates),
+    write('29\n').
+
+minimax(_, _, _, 2, 0):- !.
+minimax(GameState, Player, Type, Level, Value):-
+	other_player(Player, NewPlayer),
+	swap_minimax(Type, NewType),
+    NextLevel is Level + 1,
+    write('30 \n'),
+	valid_moves(GameState, Player, ListOfMoves),
+    write('31 \n'),
+	setof(Val, (  member(Coordinate, ListOfMoves), 
+                  move(GameState, Coordinate, NewGameState), 
+                  value(NewGameState,Player,Value1),
+                  minimax(NewGameState, NewPlayer, NewType, NextLevel, Value2), 
+                  Val is Value1 + Value2), Values),
+                  write('32 \n'),
+    eval(Type, Values, Value).
+
 
 play :-
     configurations(GameState), !,

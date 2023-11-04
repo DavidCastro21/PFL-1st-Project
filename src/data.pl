@@ -23,11 +23,11 @@ board([
 
 
 
-piece_info(blackP, player1, black).
-piece_info(whiteP, player2, white).
+piece_info(whiteP, player1, white).
+piece_info(blackP, player2, black).
 piece_info(winBlack, neutral).
 piece_info(winWhite, neutral).
-piece_info(nonblock, neutral).
+piece_info(nonblock, nonblock).
 piece_info(empty, neutral).
 
 other_player(player1, player2).

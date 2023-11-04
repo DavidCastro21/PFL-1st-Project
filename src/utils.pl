@@ -64,6 +64,10 @@ replace(Index, Element, List, Result) :-
     nth0(Index, Result, Element, R).
 
 
+swap_minimax(min, max).
+swap_minimax(max, min).
 
+eval(min, [Value|_], Result):- Result is -Value.
+eval(max, Values, Value):- last(Values, Value).
 
 
