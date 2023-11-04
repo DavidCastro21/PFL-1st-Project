@@ -17,8 +17,8 @@ put_piece(Board, Col-Row, Piece, NewBoard):-
     replace(RowIndex, NewLine, Board, NewBoard).
 
 position(Board, Col-Row, Piece):-
-    \+winWhite(Col-Row),
     \+winBlack(Col-Row),
+    \+winWhite(Col-Row),
     nth1(Row, Board, Line),
     nth1(Col, Line, Piece), !.
 

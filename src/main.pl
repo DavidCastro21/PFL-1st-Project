@@ -123,15 +123,15 @@ game_over([Board, Player, _], Winner):-
 
 count_end_positions(Board, Winner, WinnerPoints):-
     write('7 \n'),
-    Player == player1,
     write('8 \n'),
     findall(1, (winBlack(Coordinate), piece_info(_, Player, Piece), position(Board, Coordinate, Piece)), End),
     write('9 \n'),
-    length(End, WinnerPoints).
+    
+    length(End, WinnerPoints)
+    write('10 \n').
 
 count_end_positions(Board, Winner, WinnerPoints):-
     write('10 \n'),
-    Player == player2,
     write('11 \n'),
     findall(1, (winWhite(Coordinate), piece_info(_, Player, Piece), position(Board, Coordinate, Piece)), End),
     write('12 \n'),
@@ -184,15 +184,8 @@ choose_move([Board, Player, TotalMoves], Move):-
     choose_move([Board, Player, TotalMoves], Player, Level, Move), !.
 
 choose_move(GameState, Player, 1, ColI-RowI-ColF-RowF):-
-    write('19 \n'),
     valid_moves(GameState, Player, ListOfMoves),
-    write('20 \n'),
-    length(ListOfMoves, NumMoves),
-    format('~d \n', [NumMoves]),
-    write('21 \n'),
-    random(0, NumMoves, RandomIndex),
-    write('22 \n'),
-    nth0(RandomIndex, ListOfMoves, ColI-RowI-ColF-RowF).
+    random_member(ColI-RowI-ColF-RowF, ListOfMoves).
 
 
 choose_move(GameState, Player, 2, ColI-RowI-ColF-RowF):-
