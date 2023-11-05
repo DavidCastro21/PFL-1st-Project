@@ -45,10 +45,10 @@ display_header(N, Max) :-
     N1 is N+1,
     display_header(N1, Max).
 
-% get_symbol(+Board, +Line, +Col, -Symbol)
+% get_piece(+Board, +Line, +Col, -Symbol)
 % Gets the symbol of a piece on the Col and Line coordinates of the board
-get_symbol(Board, Line, Col, Symbol) :-
-    position(Board, Col-Line, Piece),
+get_piece(Board, Line, Col, Symbol) :-
+    place(Board, Col-Line, Piece),
     symbol(Piece, Symbol).
 
 % display_pieces(+Board, +Line, +Col)
@@ -56,7 +56,7 @@ get_symbol(Board, Line, Col, Symbol) :-
 display_pieces(_,_,Col):-
     Col > 17, write('\n  '), !.
 display_pieces(Board, Line, Col) :-
-    get_symbol(Board, Line, Col, Symbol),
+    get_piece(Board, Line, Col, Symbol),
     format(' ~a |', [Symbol]),
     Col1 is Col+1,
     display_pieces(Board, Line, Col1).
