@@ -2,6 +2,23 @@
 :- consult(data).
 :- consult(utils).
 
+
+position(Board, Col-Row, Piece) :-
+    (winBlack(Col-Row); winWhite(Col-Row)),
+    nth1(Row, Board, Line),
+    nth1(Col, Line, Piece),
+    Piece \= empty, Piece \= winBlack, Piece \= winWhite, !.
+
+position(_, Col-Row, winBlack):- 
+    winBlack(Col-Row), !.
+
+position(_, Col-Row, winWhite):-
+    winWhite(Col-Row), !.
+
+in_bounds(Board, Col-Row) :-
+    between(1, 9, Row),
+    between(1, 17, Col).
+
 put_piece(Board, Col-Row, empty, NewBoard) :-
     winBlack(Col-Row), !,
     put_piece(Board, Col-Row, winBlack, NewBoard).
@@ -22,72 +39,190 @@ position(Board, Col-Row, Piece):-
     nth1(Row, Board, Line),
     nth1(Col, Line, Piece), !.
 
+validate_move(GameState, Col1-Row1, Col2-Row2):-
+    [Board, Player, _] = GameState,
+    in_bounds(Board, Col1-Row1), in_bounds(Board, Col2-Row2),
+    position(Board, Col1-Row1, Piece1), position(Board, Col2-Row2, Piece2),
+    \+piece_info(Piece1, neutral), piece_info(Piece2, neutral),
+    piece_info(Piece, Player, Piece1),
+    valid_direction(Piece, Col1-Row1, Col2-Row2),
+    \+path_obstructed(Board, Col1-Row1, Col2-Row2),
+    (
+        (Player = player1, Piece2 \= winWhite);
+        (Player = player2, Piece2 \= winBlack)
+    ).
 
-position(Board, Col-Row, Piece) :-
-    (winBlack(Col-Row); winWhite(Col-Row)),
-    nth1(Row, Board, Line),
-    nth1(Col, Line, Piece),
-    Piece \= empty, Piece \= winBlack, Piece \= winWhite, !.
+validate_eat_move(GameState, Col1-Row1, Col2-Row2):-
+    [Board, Player, _] = GameState,
+    in_bounds(Board, Col1-Row1), in_bounds(Board, Col2-Row2),
+    position(Board, Col1-Row1, Piece1), position(Board, Col2-Row2, Piece2),
+    piece_info(Piece2, neutral),
+    valid_eat(Piece, Col1-Row1, Col2-Row2).
 
-position(_, Col-Row, winBlack):- 
-    winBlack(Col-Row), !.
+valid_eat(whiteP,Col1-Row1, Col2-Row2):-
+    (Col2 =:= Col1 + 2, Row2 =:= Row1 + 2;
+    Col2 =:= Col1 + 2, Row2 =:= Row1 - 2;
+    Col2 =:= Col1 - 2, Row2 =:= Row1 + 2;
+    Col2 =:= Col1 - 2, Row2 =:= Row1 - 2).
 
-position(_, Col-Row, winWhite):-
-    winWhite(Col-Row), !.
+valid_eat(blackP,Col1-Row1, Col2-Row2):-
+    (Col2 =:= Col1 + 2, Row2 =:= Row1 + 2;
+    Col2 =:= Col1 + 2, Row2 =:= Row1 - 2;
+    Col2 =:= Col1 - 2, Row2 =:= Row1 + 2;
+    Col2 =:= Col1 - 2, Row2 =:= Row1 - 2).
 
-in_bounds(Board, Col-Row) :-
-    between(1, 9, Row),
-    between(1, 17, Col).
+valid_direction(whiteP, Col1-Row1, Col2-Row2):-
+    (Col2 =:= Col1 + 1, Row2 =:= Row1 + 1;
+    Col2 =:= Col1 + 1, Row2 =:= Row1 - 1;
+    Col2 =:= Col1 - 1, Row2 =:= Row1 + 1;
+    Col2 =:= Col1 - 1, Row2 =:= Row1 - 1;
+    Col2 =:= Col1 + 2, Row2 =:= Row1;
+    Col2 =:= Col1 - 2, Row2 =:= Row1).
 
-display_bar(0) :-
-    write('|\n'), !.
+valid_direction(blackP, Col1-Row1, Col2-Row2):-
+    (Col2 =:= Col1 + 1, Row2 =:= Row1 + 1;
+    Col2 =:= Col1 + 1, Row2 =:= Row1 - 1;
+    Col2 =:= Col1 - 1, Row2 =:= Row1 + 1;
+    Col2 =:= Col1 - 1, Row2 =:= Row1 - 1;
+    Col2 =:= Col1 + 2, Row2 =:= Row1;
+    Col2 =:= Col1 - 2, Row2 =:= Row1).
 
-display_bar(N) :-
-    write('|---'),
-    N1 is N-1,
-    display_bar(N1).
+move_direction(DeltaCol-DeltaRow,-1,-1) :-  
+    (DeltaCol < 0, DeltaRow < 0), !.
+move_direction(DeltaCol-DeltaRow,1,-1) :-  
+    (DeltaCol > 0, DeltaRow < 0), !.
+move_direction(DeltaCol-DeltaRow,-1,1) :-  
+    (DeltaCol < 0, DeltaRow > 0), !.
+move_direction(DeltaCol-DeltaRow,1,1) :-    
+    (DeltaCol > 0, DeltaRow > 0), !.
+move_direction(DeltaCol-DeltaRow,2,0) :-
+    (DeltaCol > 1, DeltaRow =:= 0), !.
+move_direction(DeltaCol-DeltaRow,-2,0) :-
+    (DeltaCol < -1, DeltaRow =:= 0), !.
 
-display_header(Max, Max) :-
-    format('~d\n  ', [Max]), !.
+path_obstructed(Board, Col1-Row1, Col2-Row2):-
+    DeltaCol is Col2-Col1, DeltaRow is Row2-Row1,
+    move_direction(DeltaCol-DeltaRow, HorDir, VerDir),
+    \+path_obstructedAux(Board, Col1-Row1, Col2-Row2, HorDir-VerDir).
 
-display_header(1, Max) :-
-    write('\n    1   '),
-    display_header(2, Max), !.
+path_obstructedAux(_, Col-Row, Col-Row, _):- !.
+path_obstructedAux(Board, Col1-Row1, Col2-Row2, Hordir-Verdir):-
+    Col3 is Col1+Hordir, Row3 is Row1+Verdir,
+    position(Board, Col3-Row3, Piece),
+    piece_info(Piece, neutral), !,
+    path_obstructedAux(Board, Col3-Row3, Col2-Row2, Hordir-Verdir).
 
-display_header(N, Max) :-
-    N > 9, 
-    format('~d  ', [N]),
-    N1 is N+1,
-    display_header(N1, Max), !.
+move(GameState, Col1-Row1-Col2-Row2, NewGameState):-
+    [Board, Player, TotalMoves] = GameState,
+    position(Board, Col1-Row1, Piece),
+    put_piece(Board, Col1-Row1, empty, Board1),
+    put_piece(Board1, Col2-Row2, Piece, Board2),
+    other_player(Player, OtherPlayer),
+    NewTotalMoves is TotalMoves + 1,
+    NewGameState = [Board2, OtherPlayer, NewTotalMoves].
 
-display_header(N, Max) :-
-    format('~d   ', [N]),
-    N1 is N+1,
-    display_header(N1, Max).
+move_eat(GameState, Col1-Row1-Col2-Row2, NewGameState):-
+    [Board, Player, TotalMoves] = GameState,
+    position(Board, Col1-Row1, Piece),
+    put_piece(Board, Col1-Row1, empty, Board1),
+    put_piece(Board1, Col2-Row2, Piece, Board2),
+    Col3 is Col2 + Col1, Row3 is Row2 + Row1,
+    ColF is Col3 // 2, RowF is Row3 // 2,
+    put_piece(Board2, ColF-RowF, empty, Board3),
+    other_player(Player, OtherPlayer),
+    NewTotalMoves is TotalMoves + 1,
+    NewGameState = [Board3, OtherPlayer, NewTotalMoves].
+    
+valid_moves(GameState, _, ListOfMoves):-
+    findall(Col1-Row1-Col2-Row2, validate_move(GameState, Col1-Row1, Col2-Row2), ListOfMoves),
+    \+length(ListOfMoves, 0).
 
-get_symbol(Board, Line, Col, Symbol) :-
-    position(Board, Col-Line, Piece),
-    symbol(Piece, Symbol).
+valid_moves(GameState, Player, ListOfMoves) :-
+    [Board, _, TotalMoves] = GameState,
+    findall(Col1-Row1-Col2-Row2, validate_move([Board, Player, TotalMoves], Col1-Row1, Col2-Row2), ListOfMoves).
 
-display_pieces(_,_,Col):-
-    Col > 17, write('\n  '), !.
+count_end_positions(Board, Winner, WinnerPoints):-
+    findall(1, (winBlack(Coordinate), piece_info(_, Player, Piece), position(Board, Coordinate, Piece)), End),
+    length(End, WinnerPoints).
 
-display_pieces(Board, Line, Col) :-
-    get_symbol(Board, Line, Col, Symbol),
-    format(' ~a |', [Symbol]),
-    Col1 is Col+1,
-    display_pieces(Board, Line, Col1).
+count_end_positions(Board, Winner, WinnerPoints):-
+    findall(1, (winWhite(Coordinate), piece_info(_, Player, Piece), position(Board, Coordinate, Piece)), End),
+    length(End, WinnerPoints).
 
-display_rows(_, Line) :-
-    Line > 9 ,nl, !.
+value([Board, OtherPlayer, _], Player, Value) :-
+    count_end_positions(Board, Player, WinnerPoints),
+    check_directions(Board, Player, EndsReachable),
+    Value is 1000 * WinnerPoints + EndsReachable. 
 
-display_rows(Board, Line) :-
-    format('~d |', [Line]),
-    display_pieces(Board, Line, 1),
-    display_bar(17),
-    Line1 is Line+1,
-    display_rows(Board, Line1).
+check_directions(Board,Player,Result):-
+    findall(1,( piece_info(Type1,Player,Piece1), 
+                in_bounds(Board,ColI-RowI),
+                position(Board,ColI-RowI,Piece1),
+                piece_info(winBlack, _, Piece2),
+                position(Board,ColF-RowF,empty), 
+                valid_direction(Type1,ColI-RowI,ColF-RowF), 
+                \+path_obstructed(Board,ColI-RowI,ColF-RowF)),
+            List),
+    length(List, Result).
 
+check_directions(Board,Player,Result):-
+    findall(1,( piece_info(Type1,Player,Piece1), 
+                in_bounds(Board,ColI-RowI),
+                position(Board,ColI-RowI,Piece1),
+                piece_info(winWhite, _, Piece2),
+                position(Board,ColF-RowF,empty), 
+                valid_direction(Type1,ColI-RowI,ColF-RowF), 
+                \+path_obstructed(Board,ColI-RowI,ColF-RowF)),
+            List),
+    length(List, Result).
+
+choose_move([Board, Player, TotalMoves], Col1-Row1-Col2-Row2):-
+    \+difficulty(Player, _),
+    repeat,
+    get_move(Board, Col1-Row1-Col2-Row2),
+    validate_move([Board, Player, TotalMoves],Col1-Row1, Col2-Row2), !.
+
+choose_move([Board, Player, TotalMoves], Move):-
+    difficulty(Player, Level),
+    choose_move([Board, Player, TotalMoves], Player, Level, Move), !.
+
+choose_move(GameState, Player, 1, ColI-RowI-ColF-RowF):-
+    valid_moves(GameState, Player, ListOfMoves),
+    random_member(ColI-RowI-ColF-RowF, ListOfMoves).
+
+
+choose_move(GameState, Player, 2, ColI-RowI-ColF-RowF):-
+	valid_moves(GameState, Player, ListOfMoves),
+    other_player(Player, NewPlayer),
+	findall(Value-Coordinate, ( member(Coordinate, ListOfMoves), 
+                                move(GameState, Coordinate, NewGameState), 
+                                value(NewGameState,Player, Value1),
+                                minimax(NewGameState, NewPlayer, min, 1, Value2),
+                                Value is Value1 + Value2), Pairs),
+    sort(Pairs, SortedPairs),
+    last(SortedPairs, Max-_),
+    findall(Coordinates, member(Max-Coordinates, SortedPairs), MaxCoordinates),
+    random_member(ColI-RowI-ColF-RowF, MaxCoordinates).
+
+choose_eat([Boar,Player,TotalMoves], Col1-Row1-Col2-Row2):-
+    \+difficulty(Player, _),
+    repeat,
+    GameState = [Board, Player, TotalMoves],
+    get_move(Board, Col1-Row1-Col2-Row2),
+    validate_eat_move(GameState, ColI-RowI, ColF-RowF), !.
+
+minimax(_, _, _, 1, 0):- !.
+minimax(GameState, Player, Type, Level, Value):-
+	other_player(Player, NewPlayer),
+	swap_minimax(Type, NewType),
+    NextLevel is Level + 1,
+	valid_moves(GameState, Player, ListOfMoves),
+	setof(Val, (  member(Coordinate, ListOfMoves), 
+                  move(GameState, Coordinate, NewGameState), 
+                  value(NewGameState,Player,Value1),
+                  minimax(NewGameState, NewPlayer, NewType, NextLevel, Value2), 
+                  Val is Value1 + Value2), Values),
+    eval(Type, Values, Value).
 
 end_board:-
     asserta((winWhite(5-1))),
@@ -102,7 +237,7 @@ end_board:-
     asserta((winBlack(13-9))),
     asserta((points_to_win(1))), !.
 
-init_state(Board) :-
+initial_state(Board) :-
     board(Board),
     end_board.
 
