@@ -3,7 +3,6 @@
 :- consult(configurations).
 :- consult(board).
 
-
 validate_move(GameState, Col1-Row1, Col2-Row2):-
     [Board, Player, _] = GameState,
     in_bounds(Board, Col1-Row1), in_bounds(Board, Col2-Row2),
@@ -16,6 +15,25 @@ validate_move(GameState, Col1-Row1, Col2-Row2):-
         (Player = player1, Piece2 \= winWhite);
         (Player = player2, Piece2 \= winBlack)
     ).
+
+validate_eat_move(GameState, Col1-Row1, Col2-Row2):-
+    [Board, Player, _] = GameState,
+    in_bounds(Board, Col1-Row1), in_bounds(Board, Col2-Row2),
+    position(Board, Col1-Row1, Piece1), position(Board, Col2-Row2, Piece2),
+    piece_info(Piece2, neutral),
+    valid_eat(Piece, Col1-Row1, Col2-Row2).
+
+valid_eat(whiteP,Col1-Row1, Col2-Row2):-
+    (Col2 =:= Col1 + 2, Row2 =:= Row1 + 2;
+    Col2 =:= Col1 + 2, Row2 =:= Row1 - 2;
+    Col2 =:= Col1 - 2, Row2 =:= Row1 + 2;
+    Col2 =:= Col1 - 2, Row2 =:= Row1 - 2).
+
+valid_eat(blackP,Col1-Row1, Col2-Row2):-
+    (Col2 =:= Col1 + 2, Row2 =:= Row1 + 2;
+    Col2 =:= Col1 + 2, Row2 =:= Row1 - 2;
+    Col2 =:= Col1 - 2, Row2 =:= Row1 + 2;
+    Col2 =:= Col1 - 2, Row2 =:= Row1 - 2).
 
 valid_direction(whiteP, Col1-Row1, Col2-Row2):-
     (Col2 =:= Col1 + 1, Row2 =:= Row1 + 1;
@@ -79,8 +97,25 @@ game_cycle(GameState):-
 game_cycle(GameState):-
     display_game(GameState),
     print_turn(GameState),
-    choose_move(GameState, Move),
-    move(GameState, Move, NewGameState), !,
+    get_move_choice(GameState, Choice),
+    process_choice(GameState, Choice).
+
+get_move_choice([Board, Player, TotalMoves], Choice):-
+    \+difficulty(Player, _),
+    write('Choose a move:\n'),
+    write('1 - Move\n'),
+    write('2 - Eat\n'),
+    get_option(1, 2, 'Choice', Choice), !.
+
+process_choice(GameState, 1):-
+    choose_move(GameState, Col1-Row1-Col2-Row2),
+    move(GameState, Col1-Row1-Col2-Row2, NewGameState),
+    game_cycle(NewGameState).
+
+
+process_choice(GameState, 2):-
+    choose_eat(GameState, Col1-Row1-Col2-Row2),
+    move_eat(GameState, Col1-Row1-Col2-Row2, NewGameState),
     game_cycle(NewGameState).
 
 print_turn([_,Player,_]):-
@@ -102,12 +137,20 @@ move(GameState, Col1-Row1-Col2-Row2, NewGameState):-
     NewTotalMoves is TotalMoves + 1,
     NewGameState = [Board2, OtherPlayer, NewTotalMoves].
 
+move_eat(GameState, Col1-Row1-Col2-Row2, NewGameState):-
+    [Board, Player, TotalMoves] = GameState,
+    position(Board, Col1-Row1, Piece),
+    put_piece(Board, Col1-Row1, empty, Board1),
+    put_piece(Board1, Col2-Row2, Piece, Board2),
+    Col3 is Col2 + Col1, Row3 is Row2 + Row1,
+    ColF is Col3 // 2, RowF is Row3 // 2,
+    put_piece(Board2, ColF-RowF, empty, Board3),
+    other_player(Player, OtherPlayer),
+    NewTotalMoves is TotalMoves + 1,
+    NewGameState = [Board3, OtherPlayer, NewTotalMoves].
 valid_moves(GameState, _, ListOfMoves):-
-    write ('1 \n'),
     findall(Col1-Row1-Col2-Row2, validate_move(GameState, Col1-Row1, Col2-Row2), ListOfMoves),
-    write('2 \n'),
-    \+length(ListOfMoves, 0),
-    write('3  \n').
+    \+length(ListOfMoves, 0).
 
 valid_moves(GameState, Player, ListOfMoves) :-
     [Board, _, TotalMoves] = GameState,
@@ -121,35 +164,22 @@ game_over([Board, Player, _], Winner):-
     name_of(Player, Name),
     format('~a\'s WIN!\n', [Name]).
 
-count_end_positions(Board, Winner, WinnerPoints):-
-    write('7 \n'),
-    write('8 \n'),
-    findall(1, (winBlack(Coordinate), piece_info(_, Player, Piece), position(Board, Coordinate, Piece)), End),
-    write('9 \n'),
-    
-    length(End, WinnerPoints)
-    write('10 \n').
 
 count_end_positions(Board, Winner, WinnerPoints):-
-    write('10 \n'),
-    write('11 \n'),
+    findall(1, (winBlack(Coordinate), piece_info(_, Player, Piece), position(Board, Coordinate, Piece)), End),
+    length(End, WinnerPoints).
+
+count_end_positions(Board, Winner, WinnerPoints):-
     findall(1, (winWhite(Coordinate), piece_info(_, Player, Piece), position(Board, Coordinate, Piece)), End),
-    write('12 \n'),
     length(End, WinnerPoints).
 
 
 value([Board, OtherPlayer, _], Player, Value) :-
-    write('13 \n'),
     count_end_positions(Board, Player, winBlack),
-    write('14 \n'),
     count_end_positions(Board, Player, winWhite),
-    write('15 \n'),
     EndDiff is winBlack - winWhite,
-    write('16 \n'),
     check_directions(Board, Player, EndsReachable),
-    write('17 \n'),
-    Value is 100 * EndDiff + EndsReachable,
-    write('18 \n').
+    Value is 100 * EndDiff + EndsReachable.
 
 check_directions(Board,Player,Result):-
     findall(1,( piece_info(Type1,Player,Piece1), 
@@ -189,25 +219,24 @@ choose_move(GameState, Player, 1, ColI-RowI-ColF-RowF):-
 
 
 choose_move(GameState, Player, 2, ColI-RowI-ColF-RowF):-
-    write('22 \n'),
 	valid_moves(GameState, Player, ListOfMoves),
-    write('23 \n'),
     other_player(Player, NewPlayer),
-    write('24 \n'),
 	findall(Value-Coordinate, ( member(Coordinate, ListOfMoves), 
                                 move(GameState, Coordinate, NewGameState), 
                                 value(NewGameState,Player, Value1),
                                 minimax(NewGameState, NewPlayer, min, 1, Value2),
                                 Value is Value1 + Value2), Pairs),
-    write('25 \n'),
     sort(Pairs, SortedPairs),
-    write('26 \n'),
     last(SortedPairs, Max-_),
-    write('27 \n'),
     findall(Coordinates, member(Max-Coordinates, SortedPairs), MaxCoordinates),
-    write('28 \n'),
-    random_member(ColI-RowI-ColF-RowF, MaxCoordinates),
-    write('29\n').
+    random_member(ColI-RowI-ColF-RowF, MaxCoordinates).
+
+choose_eat([Boar,Player,TotalMoves], Col1-Row1-Col2-Row2):-
+    \+difficulty(Player, _),
+    repeat,
+    GameState = [Board, Player, TotalMoves],
+    get_move(Board, Col1-Row1-Col2-Row2),
+    validate_eat_move(GameState, ColI-RowI, ColF-RowF), !.
 
 minimax(_, _, _, 2, 0):- !.
 minimax(GameState, Player, Type, Level, Value):-
