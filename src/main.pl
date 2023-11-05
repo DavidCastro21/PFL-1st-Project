@@ -107,6 +107,10 @@ get_move_choice([Board, Player, TotalMoves], Choice):-
     write('2 - Eat\n'),
     get_option(1, 2, 'Choice', Choice), !.
 
+get_move_choice([Board, Player, TotalMoves], Choice):-
+    difficulty(Player, Level),
+    Choice = 1.
+
 process_choice(GameState, 1):-
     choose_move(GameState, Col1-Row1-Col2-Row2),
     move(GameState, Col1-Row1-Col2-Row2, NewGameState),
@@ -148,6 +152,7 @@ move_eat(GameState, Col1-Row1-Col2-Row2, NewGameState):-
     other_player(Player, OtherPlayer),
     NewTotalMoves is TotalMoves + 1,
     NewGameState = [Board3, OtherPlayer, NewTotalMoves].
+    
 valid_moves(GameState, _, ListOfMoves):-
     findall(Col1-Row1-Col2-Row2, validate_move(GameState, Col1-Row1, Col2-Row2), ListOfMoves),
     \+length(ListOfMoves, 0).
@@ -175,11 +180,8 @@ count_end_positions(Board, Winner, WinnerPoints):-
 
 
 value([Board, OtherPlayer, _], Player, Value) :-
-    count_end_positions(Board, Player, winBlack),
-    count_end_positions(Board, Player, winWhite),
-    EndDiff is winBlack - winWhite,
     check_directions(Board, Player, EndsReachable),
-    Value is 100 * EndDiff + EndsReachable.
+    Value is 100 * EndsReachable.
 
 check_directions(Board,Player,Result):-
     findall(1,( piece_info(Type1,Player,Piece1), 
@@ -238,7 +240,7 @@ choose_eat([Boar,Player,TotalMoves], Col1-Row1-Col2-Row2):-
     get_move(Board, Col1-Row1-Col2-Row2),
     validate_eat_move(GameState, ColI-RowI, ColF-RowF), !.
 
-minimax(_, _, _, 2, 0):- !.
+minimax(_, _, _, 1, 0):- !.
 minimax(GameState, Player, Type, Level, Value):-
 	other_player(Player, NewPlayer),
 	swap_minimax(Type, NewType),
